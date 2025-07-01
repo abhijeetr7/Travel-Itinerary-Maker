@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Itinerary Maker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- jsPDF CDN for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas CDN for PDF export (dependency for jsPDF if converting HTML) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- qrcode.js CDN for QR code generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode.js/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .container {
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Style for editable content */
+        .editable-content {
+            border: 1px dashed #ccc;
+            padding: 10px;
+            min-height: 100px; /* Ensure visibility for editing */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center py-10">
+    <div class="container bg-white shadow-xl rounded-xl p-8 md:p-12 lg:p-16 flex flex-col lg:flex-row gap-10">
+        <!-- Input Form Section -->
+        <div class="w-full lg:w-1/3 p-6 bg-blue-50 rounded-lg shadow-md">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Travel Itinerary Maker</h1>
+
+            <div class="mb-6">
+                <label for="location" class="block text-gray-700 text-sm font-medium mb-2">Select Location:</label>
+                <select id="location" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out bg-white">
+                    <option value="">-- Select --</option>
+                    <option value="Agra, India">Agra, India</option>
+                    <option value="Jaipur, India">Jaipur, India</option>
+                    <option value="Delhi, India">Delhi, India</option>
+                    <option value="Mumbai, India">Mumbai, India</option>
+                    <option value="Goa, India">Goa, India</option>
+                    <option value="Kerala, India">Kerala, India</option>
+                    <option value="Bengaluru, India">Bengaluru, India</option>
+                    <option value="Chennai, India">Chennai, India</option>
+                    <option value="Kolkata, India">Kolkata, India</option>
+                    <option value="Varanasi, India">Varanasi, India</option>
+                    <option value="Udaipur, India">Udaipur, India</option>
+                    <option value="Leh-Ladakh, India">Leh-Ladakh, India</option>
+                    <option value="Darjeeling, India">Darjeeling, India</option>
+                    <option value="Amritsar, India">Amritsar, India</option>
+                    <option value="Mysore, India">Mysore, India</option>
+                    <option value="Hyderabad, India">Hyderabad, India</option>
+                    <option value="Ahmedabad, India">Ahmedabad, India</option>
+                    <option value="Pune, India">Pune, India</option>
+                    <option value="Shimla, India">Shimla, India</option>
+                    <option value="Manali, India">Manali, India</option>
+                </select>
+            </div>
+
+            <div class="mb-6">
+                <label for="interests" class="block text-gray-700 text-sm font-medium mb-2">Select Interests:</label>
+                <select id="interests" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out bg-white">
+                    <option value="">-- Select --</option>
+                    <option value="All">All</option>
+                    <option value="Culture & History">Culture & History</option>
+                    <option value="Food & Culinary">Food & Culinary</option>
+                    <option value="Nature & Outdoors">Nature & Outdoors</option>
+                    <option value="Adventure Sports">Adventure Sports</option>
+                    <option value="Relaxation & Wellness">Relaxation & Wellness</option>
+                    <option value="Shopping & Fashion">Shopping & Fashion</option>
+                    <option value="Art & Museums">Art & Museums</option>
+                    <option value="Nightlife & Entertainment">Nightlife & Entertainment</option>
+                    <option value="Family Friendly">Family Friendly</option>
+                    <option value="Budget Travel">Budget Travel</option>
+                    <option value="Luxury Travel">Luxury Travel</option>
+                </select>
+            </div>
+
+            <div class="mb-6">
+                <label for="duration" class="block text-gray-700 text-sm font-medium mb-2">Trip Duration (Days):</label>
+                <input type="number" id="duration" min="1" max="14" value="3" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out bg-white">
+            </div>
+
+            <div class="mb-6">
+                <label for="startDate" class="block text-gray-700 text-sm font-medium mb-2">Start Date:</label>
+                <input type="date" id="startDate" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out bg-white">
+            </div>
+
+            <div class="mb-6">
+                <label for="numTravelers" class="block text-gray-700 text-sm font-medium mb-2">Number of Travelers:</label>
+                <input type="number" id="numTravelers" min="1" value="2" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out bg-white">
+            </div>
+
+            <div class="mb-6">
+                <label for="budget" class="block text-gray-700 text-sm font-medium mb-2">Budget Level:</label>
+                <select id="budget" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out bg-white">
+                    <option value="Any">Any</option>
+                    <option value="Budget-friendly">Budget-friendly</option>
+                    <option value="Mid-range">Mid-range</option>
+                    <option value="Luxury">Luxury</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col space-y-4">
+                <button id="generateBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105">
+                    Generate Itinerary
+                </button>
+                <button id="surpriseMeBtn" class="w-full bg-purple-600 text-white py-3 px-6 rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105">
+                    Surprise Me!
+                </button>
+                <button id="saveItineraryBtn" class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
+                    Save Itinerary
+                </button>
+                <button id="exportPdfBtn" class="w-full bg-green-600 text-white py-3 px-6 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
+                    Export as PDF
+                </button>
+                <button id="showQrBtn" class="w-full bg-yellow-600 text-white py-3 px-6 rounded-lg shadow-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
+                    Show QR Code
+                </button>
+            </div>
+
+            <!-- Saved Itineraries Section -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">My Saved Itineraries</h2>
+                <div id="savedItinerariesList" class="space-y-3">
+                    <p class="text-gray-500 text-sm text-center">No saved itineraries yet.</p>
+                </div>
+            </div>
+             <!-- Current User ID Display -->
+            <div class="mt-6 text-center text-gray-600 text-sm">
+                <p>Your User ID: <span id="currentUserId" class="font-mono text-xs break-all">Loading...</span></p>
+            </div>
+        </div>
+
+        <!-- Itinerary Output Section -->
+        <div class="w-full lg:w-2/3 p-6 bg-gray-50 rounded-lg shadow-md flex flex-col">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Your Trip Itinerary</h2>
+            <div id="itineraryOutput" class="flex-grow bg-white p-6 rounded-lg border border-gray-200 shadow-inner overflow-y-auto max-h-[70vh] flex items-center justify-center text-gray-500 text-lg">
+                <p>Your itinerary will appear here after generation.</p>
+            </div>
+            <div id="itineraryActions" class="mt-4 flex justify-end space-x-3 hidden">
+                <button id="editItineraryBtn" class="bg-orange-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                    Edit Itinerary
+                </button>
+                <button id="saveEditedItineraryBtn" class="bg-green-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 ease-in-out hidden">
+                    Save Edited
+                </button>
+                <button id="cancelEditBtn" class="bg-gray-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-300 ease-in-out hidden">
+                    Cancel Edit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner Modal -->
+    <div id="loadingModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+            <p class="text-white text-lg mt-4">Generating your itinerary...</p>
+        </div>
+    </div>
+
+    <!-- Message Modal (for alerts/confirmations) -->
+    <div id="messageModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-sm w-full text-center">
+            <h3 id="messageModalTitle" class="text-xl font-semibold mb-4 text-gray-800"></h3>
+            <p id="messageModalContent" class="text-gray-700 mb-6"></p>
+            <button id="messageModalCloseBtn" class="bg-blue-600 text-white py-2 px-5 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrCodeModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-sm w-full text-center">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Scan QR Code</h3>
+            <div id="qrcode" class="flex justify-center mb-6"></div>
+            <button id="qrCodeModalCloseBtn" class="bg-blue-600 text-white py-2 px-5 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import necessary Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase (provided by Canvas environment)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY'; // Replace with your actual Google Maps Static API Key
+
+        let db;
+        let auth;
+        let userId;
+        let currentItineraryData = null; // To store the generated itinerary for export and saving
+        let isEditing = false; // State to track if itinerary is being edited
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+
+        // Authenticate user
+        async function authenticateFirebase() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                document.getElementById('currentUserId').textContent = userId;
+                console.log("Firebase authenticated. User ID:", userId);
+                loadSavedItineraries(); // Load itineraries after authentication
+            } catch (error) {
+                console.error("Firebase authentication error:", error);
+                showMessageModal("Authentication Error", "Failed to authenticate with Firebase. Some features might not work.");
+            }
+        }
+
+        // Call authentication on window load
+        window.onload = async () => {
+            await authenticateFirebase();
+            // Event listeners for buttons
+            document.getElementById('generateBtn').addEventListener('click', generateItinerary);
+            document.getElementById('surpriseMeBtn').addEventListener('click', surpriseMe);
+            document.getElementById('saveItineraryBtn').addEventListener('click', saveItinerary);
+            document.getElementById('exportPdfBtn').addEventListener('click', exportItineraryAsPdf);
+            document.getElementById('showQrBtn').addEventListener('click', showQrCode);
+            document.getElementById('editItineraryBtn').addEventListener('click', toggleEditMode);
+            document.getElementById('saveEditedItineraryBtn').addEventListener('click', saveEditedItinerary);
+            document.getElementById('cancelEditBtn').addEventListener('click', cancelEdit);
+
+            // Modal close buttons
+            document.getElementById('messageModalCloseBtn').addEventListener('click', () => {
+                document.getElementById('messageModal').classList.add('hidden');
+            });
+            document.getElementById('qrCodeModalCloseBtn').addEventListener('click', () => {
+                document.getElementById('qrCodeModal').classList.add('hidden');
+            });
+        };
+
+        /**
+         * Displays a custom message modal instead of alert().
+         * @param {string} title - The title of the message.
+         * @param {string} content - The content of the message.
+         */
+        function showMessageModal(title, content) {
+            document.getElementById('messageModalTitle').textContent = title;
+            document.getElementById('messageModalContent').textContent = content;
+            document.getElementById('messageModal').classList.remove('hidden');
+        }
+
+        /**
+         * Toggles the visibility of the loading spinner modal.
+         * @param {boolean} show - True to show, false to hide.
+         */
+        function toggleLoading(show) {
+            document.getElementById('loadingModal').classList.toggle('hidden', !show);
+        }
+
+        /**
+         * Enables or disables action buttons (save, export, qr).
+         * @param {boolean} enable - True to enable, false to disable.
+         */
+        function toggleActionButtons(enable) {
+            document.getElementById('saveItineraryBtn').disabled = !enable;
+            document.getElementById('exportPdfBtn').disabled = !enable;
+            document.getElementById('showQrBtn').disabled = !enable;
+            document.getElementById('itineraryActions').classList.toggle('hidden', !enable);
+
+            if (enable) {
+                document.getElementById('saveItineraryBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('exportPdfBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('showQrBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                document.getElementById('saveItineraryBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('exportPdfBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('showQrBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        /**
+         * Generates the travel itinerary using the Gemini API.
+         */
+        async function generateItinerary() {
+            const location = document.getElementById('location').value;
+            const interests = document.getElementById('interests').value;
+            const duration = document.getElementById('duration').value;
+            const startDate = document.getElementById('startDate').value;
+            const numTravelers = document.getElementById('numTravelers').value;
+            const budget = document.getElementById('budget').value;
+
+            if (!location || !interests || !duration || !startDate || !numTravelers) {
+                showMessageModal("Input Required", "Please fill in all fields (Location, Interests, Duration, Start Date, Number of Travelers) to generate an itinerary.");
+                return;
+            }
+
+            toggleLoading(true);
+            toggleActionButtons(false);
+            document.getElementById('itineraryOutput').innerHTML = `
+                <p class="text-gray-500 text-lg">Generating your itinerary...</p>
+            `;
+            document.getElementById('itineraryOutput').classList.remove('editable-content');
+            document.getElementById('itineraryOutput').contentEditable = "false";
+            document.getElementById('saveEditedItineraryBtn').classList.add('hidden');
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.getElementById('editItineraryBtn').classList.remove('hidden');
+
+
+            try {
+                // Construct the prompt for the LLM
+                let promptDetails = `a trip to ${location} for ${duration} days, starting on ${startDate}, for ${numTravelers} traveler(s).`;
+                if (interests === "All") {
+                    promptDetails += ` covering a wide range of interests including Culture & History, Food & Culinary, Nature & Outdoors, and local experiences.`;
+                } else {
+                    promptDetails += ` focusing on ${interests}.`;
+                }
+                if (budget !== "Any") {
+                    promptDetails += ` The budget level should be ${budget}.`;
+                }
+
+                const prompt = `Generate a detailed day-by-day travel itinerary for ${promptDetails}
+                The itinerary should be structured as a JSON array of daily plans. Each daily plan should include:
+                - "day": (integer) The day number (e.g., 1, 2, 3).
+                - "theme": (string) A short theme for the day (e.g., "Historic Landmarks", "Local Cuisine").
+                - "activities": (array of objects) A list of activities for the day. Each activity object should have:
+                    - "time": (string) A suggested time (e.g., "Morning", "Afternoon", "Evening", "9:00 AM").
+                    - "description": (string) A brief description of the activity.
+                    - "place": (string) The name of the place.
+                    - "latitude": (number) The latitude of the place (if available, otherwise null).
+                    - "longitude": (number) The longitude of the place (if available, otherwise null).
+                    - "tips": (string) A helpful tip for the activity (e.g., "Book tickets in advance", "Try the local street food").
+                Ensure the JSON is valid and only contains the itinerary data. Do not include any introductory or concluding text outside the JSON.`;
+
+                const chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+                // Define the JSON schema for the expected response
+                const responseSchema = {
+                    type: "ARRAY",
+                    items: {
+                        type: "OBJECT",
+                        properties: {
+                            "day": { "type": "INTEGER" },
+                            "theme": { "type": "STRING" },
+                            "activities": {
+                                "type": "ARRAY",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "time": { "type": "STRING" },
+                                        "description": { "type": "STRING" },
+                                        "place": { "type": "STRING" },
+                                        "latitude": { "type": "NUMBER", "nullable": true },
+                                        "longitude": { "type": "NUMBER", "nullable": true },
+                                        "tips": { "type": "STRING" }
+                                    },
+                                    "required": ["time", "description", "place", "tips"]
+                                }
+                            }
+                        },
+                        "required": ["day", "theme", "activities"]
+                    }
+                };
+
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: responseSchema
+                    }
+                };
+
+                const apiKey = ""; // Canvas will provide this at runtime
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} - ${errorData.message || response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log("Gemini API Raw Result:", result);
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const itinerary = JSON.parse(jsonString);
+                    currentItineraryData = {
+                        location, interests, duration, startDate, numTravelers, budget,
+                        itinerary: itinerary
+                    }; // Store for export and saving
+                    renderItinerary(itinerary);
+                    toggleActionButtons(true);
+                } else {
+                    throw new Error("Invalid response structure from Gemini API.");
+                }
+
+            } catch (error) {
+                console.error("Error generating itinerary:", error);
+                showMessageModal("Generation Error", `Failed to generate itinerary: ${error.message}. Please try again.`);
+                document.getElementById('itineraryOutput').innerHTML = `
+                    <p class="text-red-500 text-lg">Error generating itinerary. Please try again.</p>
+                `;
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        /**
+         * Renders the generated itinerary to the UI.
+         * @param {Array} itinerary - The itinerary data.
+         * @param {boolean} showMap - Whether to show map images (requires API key).
+         */
+        function renderItinerary(itinerary, showMap = true) {
+            const outputDiv = document.getElementById('itineraryOutput');
+            outputDiv.innerHTML = ''; // Clear previous content
+
+            if (!itinerary || itinerary.length === 0) {
+                outputDiv.innerHTML = `<p class="text-gray-500 text-lg">No itinerary generated. Please try again with different selections.</p>`;
+                return;
+            }
+
+            itinerary.forEach(dayPlan => {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'bg-white p-6 rounded-lg shadow-md mb-6 border border-blue-200';
+                dayCard.innerHTML = `
+                    <h3 class="text-xl font-semibold text-blue-700 mb-4">Day ${dayPlan.day}: ${dayPlan.theme}</h3>
+                `;
+
+                dayPlan.activities.forEach(activity => {
+                    const activityItem = document.createElement('div');
+                    activityItem.className = 'mb-4 pb-4 border-b border-gray-200 last:border-b-0 last:pb-0';
+                    activityItem.innerHTML = `
+                        <p class="text-gray-800 font-medium">${activity.time}: <span class="text-blue-600">${activity.place}</span></p>
+                        <p class="text-gray-700 text-sm mt-1">${activity.description}</p>
+                        <p class="text-gray-600 text-xs mt-1 italic">Tip: ${activity.tips}</p>
+                    `;
+
+                    // Add Google Static Map if coordinates are available and API key is set
+                    if (showMap && activity.latitude && activity.longitude && GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY') {
+                        const mapImg = document.createElement('img');
+                        mapImg.src = `https://maps.googleapis.com/maps/api/staticmap?center=${activity.latitude},${activity.longitude}&zoom=14&size=300x150&markers=color:red%7C${activity.latitude},${activity.longitude}&key=${GOOGLE_MAPS_API_KEY}`;
+                        mapImg.alt = `Map of ${activity.place}`;
+                        mapImg.className = 'mt-2 rounded-md shadow-sm border border-gray-200';
+                        mapImg.onerror = () => { mapImg.style.display = 'none'; console.warn(`Failed to load map for ${activity.place}. Check API key or coordinates.`); };
+                        activityItem.appendChild(mapImg);
+                    } else if (showMap && GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY') {
+                        console.warn("Google Maps Static API Key is not set. Map previews will not be displayed.");
+                    }
+
+                    dayCard.appendChild(activityItem);
+                });
+                outputDiv.appendChild(dayCard);
+            });
+        }
+
+        /**
+         * Toggles the edit mode for the itinerary output.
+         */
+        function toggleEditMode() {
+            const itineraryOutput = document.getElementById('itineraryOutput');
+            isEditing = !isEditing;
+
+            if (isEditing) {
+                itineraryOutput.contentEditable = "true";
+                itineraryOutput.classList.add('editable-content');
+                document.getElementById('editItineraryBtn').classList.add('hidden');
+                document.getElementById('saveEditedItineraryBtn').classList.remove('hidden');
+                document.getElementById('cancelEditBtn').classList.remove('hidden');
+                // Disable other action buttons while editing
+                document.getElementById('saveItineraryBtn').disabled = true;
+                document.getElementById('exportPdfBtn').disabled = true;
+                document.getElementById('showQrBtn').disabled = true;
+            } else {
+                itineraryOutput.contentEditable = "false";
+                itineraryOutput.classList.remove('editable-content');
+                document.getElementById('editItineraryBtn').classList.remove('hidden');
+                document.getElementById('saveEditedItineraryBtn').classList.add('hidden');
+                document.getElementById('cancelEditBtn').classList.add('hidden');
+                // Re-enable other action buttons
+                toggleActionButtons(true);
+            }
+        }
+
+        /**
+         * Saves the currently displayed (and potentially edited) itinerary to Firestore.
+         */
+        async function saveItinerary() {
+            if (!currentItineraryData) {
+                showMessageModal("No Itinerary", "Please generate an itinerary first before saving.");
+                return;
+            }
+            if (!userId) {
+                showMessageModal("Authentication Required", "Please wait for authentication to complete before saving.");
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const itinerariesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/itineraries`);
+                const docRef = await addDoc(itinerariesCollectionRef, {
+                    name: `Trip to ${currentItineraryData.location} (${currentItineraryData.duration} days)`,
+                    location: currentItineraryData.location,
+                    interests: currentItineraryData.interests,
+                    duration: currentItineraryData.duration,
+                    startDate: currentItineraryData.startDate,
+                    numTravelers: currentItineraryData.numTravelers,
+                    budget: currentItineraryData.budget,
+                    itineraryData: JSON.stringify(currentItineraryData.itinerary), // Store JSON as string
+                    rawHtmlContent: document.getElementById('itineraryOutput').innerHTML, // Store raw HTML for editing
+                    timestamp: Date.now()
+                });
+                console.log("Document written with ID: ", docRef.id);
+                showMessageModal("Itinerary Saved!", "Your itinerary has been successfully saved.");
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                showMessageModal("Save Error", `Failed to save itinerary: ${e.message}`);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        /**
+         * Saves the edited itinerary content (as HTML string) to Firestore.
+         */
+        async function saveEditedItinerary() {
+            if (!currentItineraryData) {
+                showMessageModal("No Itinerary", "No current itinerary to save edits for.");
+                return;
+            }
+            if (!userId) {
+                showMessageModal("Authentication Required", "Please wait for authentication to complete before saving.");
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                // Find the document to update. For simplicity, we'll assume we're updating the last generated/loaded one.
+                // In a real app, you'd track the docId of the loaded itinerary.
+                // For now, if currentItineraryData has a docId, update it. Otherwise, save as new.
+                const itineraryIdToUpdate = currentItineraryData.docId; // Assuming docId is stored when loaded/saved initially
+
+                if (itineraryIdToUpdate) {
+                    const docRef = doc(db, `artifacts/${appId}/users/${userId}/itineraries`, itineraryIdToUpdate);
+                    await setDoc(docRef, {
+                        rawHtmlContent: document.getElementById('itineraryOutput').innerHTML,
+                        timestamp: Date.now() // Update timestamp
+                    }, { merge: true }); // Merge to only update specific fields
+                    showMessageModal("Edits Saved!", "Your itinerary edits have been successfully saved.");
+                } else {
+                    // If it's a newly generated itinerary that hasn't been saved yet, save it as new.
+                    await saveItinerary();
+                }
+
+                toggleEditMode(); // Exit edit mode after saving
+            } catch (e) {
+                console.error("Error saving edited document: ", e);
+                showMessageModal("Save Error", `Failed to save edited itinerary: ${e.message}`);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        /**
+         * Cancels the edit mode and reverts the itinerary display.
+         */
+        function cancelEdit() {
+            toggleEditMode(); // Exit edit mode
+            if (currentItineraryData && currentItineraryData.itinerary) {
+                renderItinerary(currentItineraryData.itinerary); // Re-render original data
+            } else {
+                document.getElementById('itineraryOutput').innerHTML = `<p class="text-gray-500 text-lg">Your itinerary will appear here after generation.</p>`;
+            }
+        }
+
+
+        /**
+         * Loads saved itineraries from Firestore and displays them.
+         */
+        function loadSavedItineraries() {
+            if (!userId) {
+                console.warn("User ID not available yet for loading itineraries.");
+                return;
+            }
+
+            const itinerariesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/itineraries`);
+            const q = query(itinerariesCollectionRef);
+
+            onSnapshot(q, (snapshot) => {
+                const savedListDiv = document.getElementById('savedItinerariesList');
+                savedListDiv.innerHTML = ''; // Clear current list
+
+                if (snapshot.empty) {
+                    savedListDiv.innerHTML = '<p class="text-gray-500 text-sm text-center">No saved itineraries yet.</p>';
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const itemId = docSnap.id;
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'flex items-center justify-between bg-gray-100 p-3 rounded-lg shadow-sm text-sm';
+                    itemDiv.innerHTML = `
+                        <span class="font-medium text-gray-700">${data.name || 'Unnamed Itinerary'}</span>
+                        <div class="flex space-x-2">
+                            <button data-id="${itemId}" data-type="load" class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition duration-200">Load</button>
+                            <button data-id="${itemId}" data-type="delete" class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-200">Delete</button>
+                        </div>
+                    `;
+                    savedListDiv.appendChild(itemDiv);
+                });
+
+                // Add event listeners for load/delete buttons
+                savedListDiv.querySelectorAll('button').forEach(button => {
+                    button.addEventListener('click', async (event) => {
+                        const id = event.target.dataset.id;
+                        const type = event.target.dataset.type;
+
+                        if (type === 'load') {
+                            await loadItineraryById(id);
+                        } else if (type === 'delete') {
+                            await deleteItinerary(id);
+                        }
+                    });
+                });
+            }, (error) => {
+                console.error("Error listening to saved itineraries:", error);
+                showMessageModal("Load Error", `Failed to load saved itineraries: ${error.message}`);
+                document.getElementById('savedItinerariesList').innerHTML = '<p class="text-red-500 text-sm text-center">Error loading itineraries.</p>';
+            });
+        }
+
+        /**
+         * Loads a specific itinerary by its ID and displays it.
+         * @param {string} itineraryId - The ID of the itinerary document.
+         */
+        async function loadItineraryById(itineraryId) {
+            if (!userId) {
+                showMessageModal("Authentication Required", "Please wait for authentication to complete before loading.");
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/itineraries`, itineraryId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // Attempt to parse JSON first, if it exists and is valid
+                    let itineraryParsed = null;
+                    try {
+                        if (data.itineraryData) {
+                            itineraryParsed = JSON.parse(data.itineraryData);
+                        }
+                    } catch (e) {
+                        console.warn("Could not parse itineraryData as JSON, falling back to raw HTML.", e);
+                    }
+
+                    if (itineraryParsed) {
+                        currentItineraryData = { ...data, itinerary: itineraryParsed, docId: itineraryId };
+                        renderItinerary(itineraryParsed);
+                    } else if (data.rawHtmlContent) {
+                        // If JSON parsing failed or wasn't available, use raw HTML
+                        document.getElementById('itineraryOutput').innerHTML = data.rawHtmlContent;
+                        currentItineraryData = { ...data, itinerary: null, docId: itineraryId }; // Store null for structured data
+                        console.log("Loaded itinerary from raw HTML content.");
+                    } else {
+                        throw new Error("Itinerary data is empty or invalid.");
+                    }
+
+                    // Populate form fields for context
+                    document.getElementById('location').value = data.location || '';
+                    document.getElementById('interests').value = data.interests || '';
+                    document.getElementById('duration').value = data.duration || 3;
+                    document.getElementById('startDate').value = data.startDate || '';
+                    document.getElementById('numTravelers').value = data.numTravelers || 2;
+                    document.getElementById('budget').value = data.budget || 'Any';
+
+                    toggleActionButtons(true); // Enable actions for loaded itinerary
+                    showMessageModal("Itinerary Loaded", `Itinerary "${data.name || 'Unnamed'}" loaded successfully.`);
+                } else {
+                    showMessageModal("Not Found", "Itinerary not found.");
+                }
+            } catch (error) {
+                console.error("Error loading itinerary:", error);
+                showMessageModal("Load Error", `Failed to load itinerary: ${error.message}`);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        /**
+         * Deletes a specific itinerary by its ID from Firestore.
+         * @param {string} itineraryId - The ID of the itinerary document to delete.
+         */
+        async function deleteItinerary(itineraryId) {
+            if (!userId) {
+                showMessageModal("Authentication Required", "Please wait for authentication to complete before deleting.");
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete this itinerary?`)) { // Using confirm for simplicity, replace with custom modal if needed
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/itineraries`, itineraryId));
+                showMessageModal("Itinerary Deleted", "Itinerary deleted successfully.");
+                // If the deleted itinerary was the one currently displayed, clear the display
+                if (currentItineraryData && currentItineraryData.docId === itineraryId) {
+                    currentItineraryData = null;
+                    document.getElementById('itineraryOutput').innerHTML = `<p class="text-gray-500 text-lg">Your itinerary will appear here after generation.</p>`;
+                    toggleActionButtons(false);
+                }
+            } catch (error) {
+                console.error("Error deleting itinerary:", error);
+                showMessageModal("Delete Error", `Failed to delete itinerary: ${error.message}`);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        /**
+         * Fills the form with random selections and generates an itinerary.
+         */
+        async function surpriseMe() {
+            const locations = Array.from(document.getElementById('location').options).map(opt => opt.value).filter(Boolean);
+            const interests = Array.from(document.getElementById('interests').options).map(opt => opt.value).filter(Boolean);
+            const budgets = Array.from(document.getElementById('budget').options).map(opt => opt.value);
+
+            if (locations.length === 0 || interests.length === 0 || budgets.length === 0) {
+                showMessageModal("Error", "Could not find locations, interests, or budgets to surprise you with. Please check the dropdowns.");
+                return;
+            }
+
+            document.getElementById('location').value = locations[Math.floor(Math.random() * locations.length)];
+            document.getElementById('interests').value = interests[Math.floor(Math.random() * interests.length)];
+            document.getElementById('duration').value = Math.floor(Math.random() * 4) + 3; // 3 to 6 days
+            document.getElementById('startDate').value = new Date().toISOString().split('T')[0]; // Today's date
+            document.getElementById('numTravelers').value = Math.floor(Math.random() * 3) + 1; // 1 to 3 travelers
+            document.getElementById('budget').value = budgets[Math.floor(Math.random() * budgets.length)];
+
+            await generateItinerary();
+        }
+
+        /**
+         * Exports the generated itinerary as a PDF.
+         */
+        async function exportItineraryAsPdf() {
+            if (!currentItineraryData) {
+                showMessageModal("No Itinerary", "Please generate an itinerary first before exporting.");
+                return;
+            }
+
+            toggleLoading(true);
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                doc.setFont("helvetica");
+                doc.setFontSize(22);
+                doc.text("Travel Itinerary", 105, 20, null, null, "center");
+
+                doc.setFontSize(12);
+                doc.text(`Location: ${currentItineraryData.location}`, 20, 35);
+                doc.text(`Interests: ${currentItineraryData.interests}`, 20, 42);
+                doc.text(`Duration: ${currentItineraryData.duration} days`, 20, 49);
+                doc.text(`Start Date: ${currentItineraryData.startDate}`, 20, 56);
+                doc.text(`Travelers: ${currentItineraryData.numTravelers}`, 20, 63);
+                doc.text(`Budget: ${currentItineraryData.budget}`, 20, 70);
+
+
+                let y = 80;
+                const margin = 15;
+                const lineHeight = 7;
+
+                // Use the structured itinerary data if available, otherwise use raw HTML content
+                const itineraryToExport = currentItineraryData.itinerary || (currentItineraryData.rawHtmlContent ? parseHtmlToItineraryStructure(currentItineraryData.rawHtmlContent) : []);
+
+                if (itineraryToExport.length === 0) {
+                     showMessageModal("Export Error", "No valid itinerary data found to export.");
+                     return;
+                }
+
+                itineraryToExport.forEach(dayPlan => {
+                    if (y + (dayPlan.activities.length * lineHeight * 2) + 20 > doc.internal.pageSize.height - margin) {
+                        doc.addPage();
+                        y = margin;
+                    }
+
+                    doc.setFontSize(16);
+                    doc.setTextColor(0, 0, 150); // Dark blue for day theme
+                    doc.text(`Day ${dayPlan.day}: ${dayPlan.theme}`, 20, y);
+                    y += lineHeight * 2;
+
+                    doc.setFontSize(10);
+                    doc.setTextColor(0, 0, 0); // Black for activity details
+
+                    dayPlan.activities.forEach(activity => {
+                        const activityText = `${activity.time}: ${activity.place} - ${activity.description}`;
+                        const tipsText = `Tip: ${activity.tips}`;
+
+                        // Check if activity text fits on current page, if not, add new page
+                        if (y + lineHeight * 2 > doc.internal.pageSize.height - margin) {
+                            doc.addPage();
+                            y = margin;
+                        }
+
+                        doc.text(activityText, 25, y);
+                        y += lineHeight;
+                        doc.setTextColor(100, 100, 100); // Gray for tips
+                        doc.text(tipsText, 30, y);
+                        y += lineHeight * 1.5; // More space after tips
+                        doc.setTextColor(0, 0, 0); // Reset color
+                    });
+                    y += lineHeight; // Space after each day
+                });
+
+                doc.save('travel_itinerary.pdf');
+                showMessageModal("Export Successful", "Your itinerary has been exported as a PDF.");
+
+            } catch (error) {
+                console.error("Error exporting PDF:", error);
+                showMessageModal("Export Error", `Failed to export PDF: ${error.message}.`);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        /**
+         * Attempts to parse HTML content back into a structured itinerary.
+         * This is a best-effort attempt and may not be perfect for arbitrary edits.
+         * @param {string} htmlContent - The raw HTML content from the itineraryOutput div.
+         * @returns {Array} Parsed itinerary structure.
+         */
+        function parseHtmlToItineraryStructure(htmlContent) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            const dayCards = doc.querySelectorAll('.bg-white.p-6.rounded-lg.shadow-md.mb-6.border.border-blue-200');
+            const parsedItinerary = [];
+
+            dayCards.forEach(dayCard => {
+                const dayThemeMatch = dayCard.querySelector('h3').textContent.match(/Day (\d+): (.+)/);
+                if (!dayThemeMatch) return;
+
+                const day = parseInt(dayThemeMatch[1]);
+                const theme = dayThemeMatch[2];
+                const activities = [];
+
+                dayCard.querySelectorAll('.mb-4.pb-4.border-b.border-gray-200').forEach(activityItem => {
+                    const timePlaceMatch = activityItem.querySelector('p:first-child').textContent.match(/(.+?): (.+)/);
+                    const description = activityItem.querySelector('p:nth-child(2)').textContent;
+                    const tipsMatch = activityItem.querySelector('p:nth-child(3)').textContent.match(/Tip: (.+)/);
+
+                    if (timePlaceMatch && description && tipsMatch) {
+                        const time = timePlaceMatch[1];
+                        const place = timePlaceMatch[2];
+                        const tips = tipsMatch[1];
+                        activities.push({ time, description, place, tips, latitude: null, longitude: null }); // Lat/Lng will be null as they are not in the HTML
+                    }
+                });
+                parsedItinerary.push({ day, theme, activities });
+            });
+            return parsedItinerary;
+        }
+
+        /**
+         * Displays a QR code for the itinerary.
+         */
+        function showQrCode() {
+            if (!currentItineraryData) {
+                showMessageModal("No Itinerary", "Please generate an itinerary first before showing QR code.");
+                return;
+            }
+
+            const qrCodeDiv = document.getElementById('qrcode');
+            qrCodeDiv.innerHTML = ''; // Clear previous QR code
+
+            // Create a simplified text representation of the itinerary for the QR code
+            // Prioritize structured data if available, otherwise use raw HTML content
+            let dataForQr = currentItineraryData.itinerary || currentItineraryData.rawHtmlContent || "No itinerary data available.";
+            if (typeof dataForQr !== 'string') {
+                dataForQr = JSON.stringify(dataForQr, null, 2);
+            }
+
+            const shareableLink = `data:text/plain;charset=utf-8,${encodeURIComponent(dataForQr)}`;
+
+            // Create QR code
+            new QRCode(qrCodeDiv, {
+                text: shareableLink,
+                width: 256,
+                height: 256,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('qrCodeModal').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
